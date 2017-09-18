@@ -16,6 +16,8 @@ num_nodes = node['num_nodes']
 username = node['username']
 user_home = '/home/' + username
 
+cores_per_node = 2
+memory_per_node = 1536 # MB
 
 # Hadoop and Spark install files
 # TODO: cache these
@@ -35,7 +37,7 @@ end
 
 # hadoop user
 user 'hadoop' do
-    home user_home
+    home '/home/hadoop'
     shell '/bin/bash'
     system true
 end
@@ -79,26 +81,117 @@ execute 'ssh_authorize' do
     not_if "grep -q 'cluster user key' #{user_home}/.ssh/authorized_keys"
 end
 
-
-# hadoop data files
-directory '/hadoop' do
+directory '/home/hadoop/.ssh/' do
     owner 'hadoop'
-    group 'hadoop'
-    mode '0755'
+    mode '0700'
+    recursive true
+end
+cookbook_file '/home/hadoop/.ssh/id_rsa' do
+    owner 'hadoop'
+    mode '0600'
+end
+cookbook_file '/home/hadoop/.ssh/id_rsa.pub' do
+    owner 'hadoop'
+    mode '0600'
+end
+cookbook_file '/home/hadoop/.ssh/config' do
+    source 'ssh-config'
+    owner 'hadoop'
+    mode '0600'
+end
+execute 'ssh_authorize_hadoop' do
+    command "echo >> /home/hadoop/.ssh/authorized_keys && cat /home/hadoop/.ssh/id_rsa.pub >> /home/hadoop/.ssh/authorized_keys"
+    not_if "grep -q 'cluster user key' /home/hadoop/.ssh/authorized_keys"
+end
+
+
+# hadoop data dirs
+['tmp', 'namenode', 'datanode'].each do |d|
+    directory '/hadoop/'+d do
+        owner 'hadoop'
+        group 'hadoop'
+        mode '0750'
+        recursive true
+    end
 end
 
 
 # hadoop tools
+package 'openjdk-8-jre'
 package 'openjdk-8-jdk'
 package 'python3'
 
 execute 'untar hadoop' do
     command "tar zxf /opt/#{HADOOP_TARFILE}"
     cwd "/opt/"
-    creates "#{HADOOP_INSTALL}foobar"
+    creates "#{HADOOP_INSTALL}/bin/hadoop"
 end
+execute 'owner hadoop' do
+    command "chown hadoop -R #{HADOOP_INSTALL}"
+    not_if "stat -c %U #{HADOOP_INSTALL}/bin/hadoop | grep -q hadoop"
+end
+link '/opt/hadoop' do
+    to HADOOP_INSTALL
+end
+
 execute 'untar spark' do
     command "tar zxf /opt/#{SPARK_TARFILE}"
     cwd "/opt/"
-    creates "#{SPARK_TARFILE}foobar"
+    creates "#{SPARK_INSTALL}/bin/spark-submit"
+end
+execute 'owner spark' do
+    command "chown hadoop -R #{SPARK_INSTALL}"
+    not_if "stat -c %U #{SPARK_INSTALL}/bin/spark-submit | grep -q hadoop"
+end
+link '/opt/spark' do
+    to SPARK_INSTALL
+end
+
+# hadoop config
+slaves_content = (1..num_nodes).map { |i| "hadoop#{i}.local" }.join("\n")
+template_vars = {
+    num_nodes: num_nodes,
+    cores_per_node: cores_per_node,
+    memory_per_node: memory_per_node,
+    spark_install: SPARK_INSTALL,
+}
+file "#{HADOOP_INSTALL}/etc/hadoop/slaves" do
+    content slaves_content
+    owner 'hadoop'
+end
+['core-site.xml', 'hdfs-site.xml', 'yarn-site.xml', 'mapred-site.xml', 'spark-defaults.conf'].each do |f|
+    template "#{HADOOP_INSTALL}/etc/hadoop/#{f}" do
+        mode '0644'
+        owner 'hadoop'
+        variables(template_vars)
+    end
+end
+replace_line 'hadoop JAVA_HOME' do
+    path "#{HADOOP_INSTALL}/etc/hadoop/hadoop-env.sh"
+	replace /export JAVA_HOME=.*/
+	with    "export JAVA_HOME=$(readlink -f /usr/bin/java | sed 's:bin/java::')"
+end
+replace_line 'hadoop HADOOP_HEAPSIZE' do
+    path "#{HADOOP_INSTALL}/etc/hadoop/hadoop-env.sh"
+	replace /#?export HADOOP_HEAPSIZE=.*/
+	with    "export HADOOP_HEAPSIZE=256"
+end
+template "#{SPARK_INSTALL}/conf/spark-defaults.conf" do
+    mode '0644'
+    owner 'hadoop'
+    variables(template_vars)
+end
+
+# scripts
+directory user_home+'/bin' do
+    owner username
+    mode '0755'
+end
+['start-all.sh', 'stop-all.sh', 'dfs-format.sh', 'clear-dfs.sh', 'nuke-dfs.sh', 'halt-all.sh', 'hdfs-balance.sh'].each do |f|
+    f_no_ext = f.sub('.sh', '')
+    cookbook_file "/home/#{username}/bin/#{f_no_ext}" do
+        source f
+        owner username
+        mode '0755'
+    end
 end

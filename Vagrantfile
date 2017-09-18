@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 VAGRANTFILE_API_VERSION = "2"
-NUM_NODES = 2
+NUM_NODES = 3
 SETUP_DATA = { 'num_nodes' => NUM_NODES, 'username' => 'ubuntu' }
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
@@ -13,7 +13,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   #config.vm.synced_folder "./", "/home/vagrant/project"
 
-  cpus = "1"
+  cpus = "2"
   memory = "1536" # MB
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--cpus", cpus, "--memory", memory]
