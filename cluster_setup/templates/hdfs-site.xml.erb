@@ -3,7 +3,7 @@
 <configuration>
  <property>
   <name>dfs.replication</name>
-  <value>2</value>
+  <value><%= @hdfs_replication %></value>
  </property>
 <property>
   <name>dfs.permissions.enabled</name>
@@ -28,7 +28,7 @@
 </property>
 <property>
     <name>dfs.blocksize</name>
-    <value>5242880</value> <!-- 5MB -->
+    <value>16777216</value> <!-- 16MB -->
 </property>
 <property>
  <name>heartbeat.recheck.interval</name>

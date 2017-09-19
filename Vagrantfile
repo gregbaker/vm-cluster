@@ -3,7 +3,14 @@
 
 VAGRANTFILE_API_VERSION = "2"
 NUM_NODES = 3
-SETUP_DATA = { 'num_nodes' => NUM_NODES, 'username' => 'ubuntu' }
+CORES_PER_NODE = 2
+MEMORY_PER_NODE = 1536
+SETUP_DATA = {
+    'num_nodes' => NUM_NODES,
+    'cores_per_node' => CORES_PER_NODE,
+    'memory_per_node' => MEMORY_PER_NODE,
+    'username' => 'ubuntu' # default username in the VM image
+}
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "ubuntu/xenial64"
@@ -11,24 +18,21 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.berkshelf.berksfile_path = "cluster_setup/Berksfile"
   config.berkshelf.enabled = true
 
-  #config.vm.synced_folder "./", "/home/vagrant/project"
+  config.vm.synced_folder "./", "/home/#{SETUP_DATA['username']}/project"
 
-  cpus = "2"
-  memory = "1536" # MB
   config.vm.provider :virtualbox do |vb|
-    vb.customize ["modifyvm", :id, "--cpus", cpus, "--memory", memory]
+    vb.customize ["modifyvm", :id, "--cpus", CORES_PER_NODE, "--memory", MEMORY_PER_NODE]
     vb.customize ["modifyvm", :id, "--uartmode1", "disconnected"] # speed up boot https://bugs.launchpad.net/cloud-images/+bug/1627844
     #vb.gui = true
   end
   
   config.vm.define "master" do |node|
     node.vm.network "private_network", ip: "192.168.7.100"
-    node.vm.hostname = "master.local"
     node.vm.network "forwarded_port", guest: 8088, host: 8088
     node.vm.network "forwarded_port", guest: 50070, host: 50070
+    node.vm.hostname = "master.local"
     node.vm.provision "chef_solo" do |chef|
       chef.cookbooks_path = "."
-      #chef.add_role("master")
       chef.add_recipe "cluster_setup"
       chef.json = SETUP_DATA
     end
@@ -41,7 +45,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
       node.vm.provision "chef_solo" do |chef|
         chef.cookbooks_path = "."
-        #chef.add_role("worker")
         chef.add_recipe "cluster_setup"
         chef.json = SETUP_DATA
       end

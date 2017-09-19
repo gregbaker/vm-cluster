@@ -3,23 +3,22 @@ HADOOP_VERSION = '2.8.1'
 SPARK_VERSION = '2.2.0'
 SPARK_HADOOP_COMPAT = '2.7'
 
+APACHE_MIRROR = "http://mirror.csclub.uwaterloo.ca/apache/"
+
 HADOOP_TARFILE = "hadoop-#{HADOOP_VERSION}.tar.gz"
-HADOOP_APACHE_PATH = "/hadoop/common/hadoop-#{HADOOP_VERSION}/#{HADOOP_TARFILE}"
+HADOOP_APACHE_PATH = "hadoop/common/hadoop-#{HADOOP_VERSION}/#{HADOOP_TARFILE}"
 HADOOP_INSTALL = "/opt/hadoop-#{HADOOP_VERSION}"
 
 SPARK_TARFILE = "spark-#{SPARK_VERSION}-bin-hadoop#{SPARK_HADOOP_COMPAT}.tgz"
 SPARK_APACHE_PATH = "spark/spark-#{SPARK_VERSION}/#{SPARK_TARFILE}"
 SPARK_INSTALL = "/opt/spark-#{SPARK_VERSION}-bin-hadoop#{SPARK_HADOOP_COMPAT}"
 
-APACHE_MIRROR = "http://mirror.csclub.uwaterloo.ca/apache/"
-
 num_nodes = node['num_nodes']
+cores_per_node = node['cores_per_node']
+memory_per_node = node['memory_per_node']
 username = node['username']
 user_home = '/home/' + username
-
-cores_per_node = 2
-memory_per_node = 1536 # MB
-
+hdfs_replication = [num_nodes-1, 2].max
 
 # hadoop user
 user 'hadoop' do
@@ -33,7 +32,7 @@ group 'supergroup' do
 end
 
 
-# networking
+# hostnames
 delete_line "/etc/hosts" do
 	line /^127\.0\.0\.1.*\.local.*/
 end
@@ -47,7 +46,7 @@ end
 end
 
 
-# SSH keys
+# SSH keys: uses same unsafe key for main user and hadoop
 directory user_home+'/.ssh/' do
     owner username
     mode '0700'
@@ -163,13 +162,16 @@ link '/opt/spark' do
     to SPARK_INSTALL
 end
 
+
 # hadoop config
 slaves_content = (1..num_nodes).map { |i| "hadoop#{i}.local" }.join("\n")
 template_vars = {
     num_nodes: num_nodes,
     cores_per_node: cores_per_node,
     memory_per_node: memory_per_node,
+	hdfs_replication: hdfs_replication,
     spark_install: SPARK_INSTALL,
+    username: username,
 }
 file "#{HADOOP_INSTALL}/etc/hadoop/slaves" do
     content slaves_content
@@ -201,13 +203,19 @@ template "/etc/profile.d/cluster-environment.sh" do
     mode '0755'
     variables(template_vars)
 end
+package 'make'
+package 'unzip'
+template user_home + '/Makefile' do
+    mode '0755'
+    variables(template_vars)
+end
 
 # scripts
 directory user_home+'/bin' do
     owner username
     mode '0755'
 end
-['start-all.sh', 'stop-all.sh', 'dfs-format.sh', 'clear-dfs.sh', 'nuke-dfs.sh', 'halt-all.sh', 'hdfs-balance.sh'].each do |f|
+['start-all.sh', 'stop-all.sh', 'dfs-format.sh', 'clear-dfs.sh', 'nuke-dfs.sh', 'halt-all.sh', 'exec-all.sh', 'hdfs-balance.sh'].each do |f|
     f_no_ext = f.sub('.sh', '')
     cookbook_file "/home/#{username}/bin/#{f_no_ext}" do
         source f
