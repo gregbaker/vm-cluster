@@ -1,4 +1,5 @@
 HADOOP_VERSION = '2.8.1'
+HADOOP_VERSION = '2.8.1'
 SPARK_VERSION = '2.2.0'
 SPARK_HADOOP_COMPAT = '2.7'
 
@@ -19,21 +20,6 @@ user_home = '/home/' + username
 cores_per_node = 2
 memory_per_node = 1536 # MB
 
-# Hadoop and Spark install files
-# TODO: cache these
-remote_file "/opt/#{HADOOP_TARFILE}" do
-    source APACHE_MIRROR + HADOOP_APACHE_PATH
-    mode '0644'
-    action :create
-    not_if "test -f /opt/#{HADOOP_TARFILE}"
-end
-remote_file "/opt/#{SPARK_TARFILE}" do
-    source APACHE_MIRROR + SPARK_APACHE_PATH
-    mode '0644'
-    action :create
-    not_if "test -f /opt/#{SPARK_TARFILE}"
-end
-
 
 # hadoop user
 user 'hadoop' do
@@ -48,6 +34,9 @@ end
 
 
 # networking
+delete_line "/etc/hosts" do
+	line /^127\.0\.0\.1.*\.local.*/
+end
 append_line "/etc/hosts" do
 	line "192.168.7.100 master master.local"
 end
@@ -116,9 +105,36 @@ end
 end
 
 
+# Hadoop and Spark install files
+directory '/opt/' do
+    owner 'hadoop'
+    group 'hadoop'
+    mode '0755'
+end
+execute 'copy_install_files' do
+    # If we can get the files from master, then do it.
+    command "rsync -a hadoop@master.local:/opt/#{HADOOP_TARFILE} hadoop@master.local:/opt/#{SPARK_TARFILE} /opt/ || true"
+    user 'hadoop'
+    not_if "test -f /opt/#{HADOOP_TARFILE} -a -f /opt/#{SPARK_TARFILE}"
+end
+remote_file "/opt/#{HADOOP_TARFILE}" do
+    source APACHE_MIRROR + HADOOP_APACHE_PATH
+    mode '0644'
+    action :create
+    not_if "test -f /opt/#{HADOOP_TARFILE}"
+end
+remote_file "/opt/#{SPARK_TARFILE}" do
+    source APACHE_MIRROR + SPARK_APACHE_PATH
+    mode '0644'
+    action :create
+    not_if "test -f /opt/#{SPARK_TARFILE}"
+end
+
+
 # hadoop tools
 package 'openjdk-8-jre'
 package 'openjdk-8-jdk'
+package 'python'
 package 'python3'
 
 execute 'untar hadoop' do
@@ -179,6 +195,10 @@ end
 template "#{SPARK_INSTALL}/conf/spark-defaults.conf" do
     mode '0644'
     owner 'hadoop'
+    variables(template_vars)
+end
+template "/etc/profile.d/cluster-environment.sh" do
+    mode '0755'
     variables(template_vars)
 end
 

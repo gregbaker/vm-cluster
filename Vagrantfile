@@ -24,6 +24,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "master" do |node|
     node.vm.network "private_network", ip: "192.168.7.100"
     node.vm.hostname = "master.local"
+    node.vm.network "forwarded_port", guest: 8088, host: 8088
+    node.vm.network "forwarded_port", guest: 50070, host: 50070
     node.vm.provision "chef_solo" do |chef|
       chef.cookbooks_path = "."
       #chef.add_role("master")
