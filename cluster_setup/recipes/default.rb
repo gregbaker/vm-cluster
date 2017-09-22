@@ -18,7 +18,7 @@ cores_per_node = node['cores_per_node']
 memory_per_node = node['memory_per_node']
 username = node['username']
 user_home = '/home/' + username
-hdfs_replication = [num_nodes-1, 2].max
+hdfs_replication = num_nodes > 3 ? 3 : 2
 
 # hadoop user
 user 'hadoop' do

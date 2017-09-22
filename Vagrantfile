@@ -2,9 +2,9 @@
 # vi: set ft=ruby :
 
 VAGRANTFILE_API_VERSION = "2"
-NUM_NODES = 3
+NUM_NODES = 3  # number of worker nodes. NUM_NODES+1 VMs will be started.
 CORES_PER_NODE = 2
-MEMORY_PER_NODE = 1536
+MEMORY_PER_NODE = 1024 # MB
 SETUP_DATA = {
     'num_nodes' => NUM_NODES,
     'cores_per_node' => CORES_PER_NODE,
