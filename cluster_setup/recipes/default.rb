@@ -168,6 +168,7 @@ slaves_content = (1..num_nodes).map { |i| "hadoop#{i}.local" }.join("\n")
 template_vars = {
     num_nodes: num_nodes,
     cores_per_node: cores_per_node,
+    total_cores: num_nodes*cores_per_node,
     memory_per_node: memory_per_node,
 	hdfs_replication: hdfs_replication,
     spark_install: SPARK_INSTALL,

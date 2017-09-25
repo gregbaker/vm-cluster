@@ -16,7 +16,7 @@ euler:
 
 big-file:
 	hdfs dfs -mkdir -p ${DEST}
-	[ -f /tmp/bigfile ] || tar -ckf /tmp/bigfile /usr/lib
+	[ -f /tmp/bigfile ] || tar -ckf /tmp/bigfile /lib
 	hdfs dfs -copyFromLocal /tmp/bigfile ${DEST}/big-file-1
 	hdfs dfs -cp ${DEST}/big-file-1 ${DEST}/big-file-2
 

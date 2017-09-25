@@ -2,9 +2,11 @@
 # vi: set ft=ruby :
 
 VAGRANTFILE_API_VERSION = "2"
-NUM_NODES = 3  # number of worker nodes. NUM_NODES+1 VMs will be started.
+NUM_NODES = 3 # number of worker nodes. NUM_NODES+1 VMs will be started.
 CORES_PER_NODE = 2
-MEMORY_PER_NODE = 1024 # MB
+MEMORY_PER_NODE = CORES_PER_NODE*1024 # MB. Total memory allocation: (NUM_NODES + 1) * MEMORY_PER_NODE
+# Disk usage on the host is approximately (NUM_NODES + 1) * 5GB
+
 SETUP_DATA = {
     'num_nodes' => NUM_NODES,
     'cores_per_node' => CORES_PER_NODE,
