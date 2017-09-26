@@ -1,20 +1,20 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-VAGRANTFILE_API_VERSION = "2"
-NUM_NODES = 3 # number of worker nodes. NUM_NODES+1 VMs will be started.
+NUM_WORKERS = 3 # number of worker nodes. NUM_WORKERS+1 VMs will be started.
 CORES_PER_NODE = 2
-MEMORY_PER_NODE = CORES_PER_NODE*1024 # MB. Total memory allocation: (NUM_NODES + 1) * MEMORY_PER_NODE
-# Disk usage on the host is approximately (NUM_NODES + 1) * 5GB
+MEMORY_PER_NODE = CORES_PER_NODE*1024 # MB. Total memory allocation: (NUM_WORKERS + 1) * MEMORY_PER_NODE
+# Disk usage on the host is approximately (NUM_WORKERS + 1) * 5GB
 
 SETUP_DATA = {
-    'num_nodes' => NUM_NODES,
+    'num_workers' => NUM_WORKERS,
     'cores_per_node' => CORES_PER_NODE,
     'memory_per_node' => MEMORY_PER_NODE,
-    'username' => 'ubuntu' # default username in the VM image
+    'username' => 'ubuntu', # default username in the VM image
+    'ubuntu_release' => 'xenial',
 }
 
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/xenial64"
   config.vm.box_version = '>= 20160921.0.0'
   config.berkshelf.berksfile_path = "cluster_setup/Berksfile"
@@ -40,7 +40,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
   end
     
-  (1..NUM_NODES).each do |i|
+  (1..NUM_WORKERS).each do |i|
     config.vm.define "hadoop#{i}" do |node|
       node.vm.network "private_network", ip: "192.168.7." + (100+i).to_s
       node.vm.hostname = "hadoop#{i}.local"

@@ -1,8 +1,9 @@
 HADOOP_VERSION = '2.8.1'
-HADOOP_VERSION = '2.8.1'
 SPARK_VERSION = '2.2.0'
 SPARK_HADOOP_COMPAT = '2.7'
 
+UBUNTU_MIRROR = 'http://mirror.its.sfu.ca/mirror/ubuntu/'
+UBUNTU_SECURITY_MIRROR = 'http://mirror.its.sfu.ca/mirror/ubuntu/'
 APACHE_MIRROR = "http://mirror.csclub.uwaterloo.ca/apache/"
 
 HADOOP_TARFILE = "hadoop-#{HADOOP_VERSION}.tar.gz"
@@ -13,12 +14,24 @@ SPARK_TARFILE = "spark-#{SPARK_VERSION}-bin-hadoop#{SPARK_HADOOP_COMPAT}.tgz"
 SPARK_APACHE_PATH = "spark/spark-#{SPARK_VERSION}/#{SPARK_TARFILE}"
 SPARK_INSTALL = "/opt/spark-#{SPARK_VERSION}-bin-hadoop#{SPARK_HADOOP_COMPAT}"
 
-num_nodes = node['num_nodes']
+num_workers = node['num_workers']
 cores_per_node = node['cores_per_node']
 memory_per_node = node['memory_per_node']
+hdfs_replication = num_workers > 3 ? 3 : 2
+
 username = node['username']
 user_home = '/home/' + username
-hdfs_replication = num_nodes > 3 ? 3 : 2
+ubuntu_release = node['ubuntu_release']
+
+# apt sources
+template "/etc/apt/sources.list" do
+    mode '0644'
+    variables({ubuntu_mirror: UBUNTU_MIRROR, ubuntu_security_mirror: UBUNTU_SECURITY_MIRROR, ubuntu_release: ubuntu_release})
+    notifies :run, 'execute[apt-get update]', :immediately
+end
+execute 'apt-get update' do
+    action :nothing
+end
 
 # hadoop user
 user 'hadoop' do
@@ -39,7 +52,7 @@ end
 append_line "/etc/hosts" do
 	line "192.168.7.100 master master.local"
 end
-(1..num_nodes).each do |i|
+(1..num_workers).each do |i|
     append_line "/etc/hosts" do
 	    line "192.168.7.#{100+i} hadoop#{i} hadoop#{i}.local"
     end
@@ -164,11 +177,11 @@ end
 
 
 # hadoop config
-slaves_content = (1..num_nodes).map { |i| "hadoop#{i}.local" }.join("\n")
+slaves_content = (1..num_workers).map { |i| "hadoop#{i}.local" }.join("\n")
 template_vars = {
-    num_nodes: num_nodes,
+    num_workers: num_workers,
     cores_per_node: cores_per_node,
-    total_cores: num_nodes*cores_per_node,
+    total_cores: num_workers*cores_per_node,
     memory_per_node: memory_per_node,
 	hdfs_replication: hdfs_replication,
     spark_install: SPARK_INSTALL,
@@ -178,7 +191,7 @@ file "#{HADOOP_INSTALL}/etc/hadoop/slaves" do
     content slaves_content
     owner 'hadoop'
 end
-['core-site.xml', 'hdfs-site.xml', 'yarn-site.xml', 'mapred-site.xml', 'spark-defaults.conf'].each do |f|
+['core-site.xml', 'hdfs-site.xml', 'yarn-site.xml', 'mapred-site.xml'].each do |f|
     template "#{HADOOP_INSTALL}/etc/hadoop/#{f}" do
         mode '0644'
         owner 'hadoop'
