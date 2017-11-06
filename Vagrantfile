@@ -1,8 +1,8 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-NUM_WORKERS = 3 # number of worker nodes. NUM_WORKERS+1 VMs will be started.
-CORES_PER_NODE = 2
+NUM_WORKERS = 4 # number of worker nodes. NUM_NODES+1 VMs will be started.
+CORES_PER_NODE = 1
 MEMORY_PER_NODE = CORES_PER_NODE*1024 # MB. Total memory allocation: (NUM_WORKERS + 1) * MEMORY_PER_NODE
 # Disk usage on the host is approximately (NUM_WORKERS + 1) * 5GB
 
