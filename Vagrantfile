@@ -17,8 +17,8 @@ SETUP_DATA = {
 Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/xenial64"
   config.vm.box_version = '>= 20160921.0.0'
-  config.berkshelf.berksfile_path = "cluster_setup/Berksfile"
-  config.berkshelf.enabled = true
+  #config.berkshelf.berksfile_path = "cluster_setup/Berksfile"
+  #config.berkshelf.enabled = true
 
   config.vm.synced_folder "./", "/home/#{SETUP_DATA['username']}/project"
 
