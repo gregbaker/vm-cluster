@@ -1,5 +1,5 @@
-HADOOP_VERSION = '2.8.1'
-SPARK_VERSION = '2.2.0'
+HADOOP_VERSION = '2.9.1'
+SPARK_VERSION = '2.3.1'
 SPARK_HADOOP_COMPAT = '2.7'
 
 UBUNTU_MIRROR = 'http://mirror.its.sfu.ca/mirror/ubuntu/'
@@ -46,15 +46,18 @@ end
 
 
 # hostnames
-delete_line "/etc/hosts" do
-	line /^127\.0\.0\.1.*\.local.*/
+delete_lines 'remove local name' do
+  path '/etc/hosts'
+  pattern /^127\.0\.1\.1.*\.local.*/
 end
-append_line "/etc/hosts" do
-	line "192.168.7.100 master master.local"
+append_if_no_line "master host" do
+    path "/etc/hosts"
+    line "192.168.7.100 master master.local"
 end
 (1..num_workers).each do |i|
-    append_line "/etc/hosts" do
-	    line "192.168.7.#{100+i} hadoop#{i} hadoop#{i}.local"
+    append_if_no_line "hadoop#{i} host" do
+        path "/etc/hosts"
+        line "192.168.7.#{100+i} hadoop#{i} hadoop#{i}.local"
     end
 end
 
@@ -198,15 +201,15 @@ end
         variables(template_vars)
     end
 end
-replace_line 'hadoop JAVA_HOME' do
+replace_or_add "hadoop JAVA_HOME" do
     path "#{HADOOP_INSTALL}/etc/hadoop/hadoop-env.sh"
-	replace /export JAVA_HOME=.*/
-	with    "export JAVA_HOME=$(readlink -f /usr/bin/java | sed 's:bin/java::')"
+    pattern /export JAVA_HOME=.*/
+    line "export JAVA_HOME=$(readlink -f /usr/bin/java | sed 's:bin/java::')"
 end
-replace_line 'hadoop HADOOP_HEAPSIZE' do
+replace_or_add "hadoop HADOOP_HEAPSIZE" do
     path "#{HADOOP_INSTALL}/etc/hadoop/hadoop-env.sh"
-	replace /#?export HADOOP_HEAPSIZE=.*/
-	with    "export HADOOP_HEAPSIZE=256"
+    pattern /#?export HADOOP_HEAPSIZE=.*/
+    line "export HADOOP_HEAPSIZE=256"
 end
 template "#{SPARK_INSTALL}/conf/spark-defaults.conf" do
     mode '0644'

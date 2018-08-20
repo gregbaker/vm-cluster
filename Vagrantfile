@@ -10,13 +10,12 @@ SETUP_DATA = {
     'num_workers' => NUM_WORKERS,
     'cores_per_node' => CORES_PER_NODE,
     'memory_per_node' => MEMORY_PER_NODE,
-    'username' => 'ubuntu', # default username in the VM image
-    'ubuntu_release' => 'xenial',
+    'username' => 'vagrant', # default username in the VM image
+    'ubuntu_release' => 'bionic',
 }
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "ubuntu/xenial64"
-  config.vm.box_version = '>= 20160921.0.0'
+  config.vm.box = "ubuntu/bionic64"
   config.berkshelf.berksfile_path = "cluster_setup/Berksfile"
   config.berkshelf.enabled = true
 
