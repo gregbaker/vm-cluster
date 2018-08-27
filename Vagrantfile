@@ -30,7 +30,7 @@ Vagrant.configure(2) do |config|
   config.vm.define "master" do |node|
     node.vm.network "private_network", ip: "192.168.7.100"
     node.vm.network "forwarded_port", guest: 8088, host: 8088
-    node.vm.network "forwarded_port", guest: 50070, host: 50070
+    node.vm.network "forwarded_port", guest: 9870, host: 9870
     node.vm.hostname = "master.local"
     node.vm.provision "chef_solo" do |chef|
       chef.cookbooks_path = "."

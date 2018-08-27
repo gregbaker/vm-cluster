@@ -1,4 +1,4 @@
-HADOOP_VERSION = '2.9.1'
+HADOOP_VERSION = '3.1.1'
 SPARK_VERSION = '2.3.1'
 SPARK_HADOOP_COMPAT = '2.7'
 
@@ -147,10 +147,7 @@ end
 
 
 # hadoop tools
-package 'openjdk-8-jre'
-package 'openjdk-8-jdk'
-package 'python'
-package 'python3'
+package ['openjdk-8-jre', 'openjdk-8-jdk', 'python', 'python3']
 
 execute 'untar hadoop' do
     command "tar zxf /opt/#{HADOOP_TARFILE}"
@@ -180,7 +177,7 @@ end
 
 
 # hadoop config
-slaves_content = (1..num_workers).map { |i| "hadoop#{i}.local" }.join("\n")
+workers_content = (1..num_workers).map { |i| "hadoop#{i}.local" }.join("\n")
 template_vars = {
     num_workers: num_workers,
     cores_per_node: cores_per_node,
@@ -190,8 +187,8 @@ template_vars = {
     spark_install: SPARK_INSTALL,
     username: username,
 }
-file "#{HADOOP_INSTALL}/etc/hadoop/slaves" do
-    content slaves_content
+file "#{HADOOP_INSTALL}/etc/hadoop/workers" do
+    content workers_content
     owner 'hadoop'
 end
 ['core-site.xml', 'hdfs-site.xml', 'yarn-site.xml', 'mapred-site.xml'].each do |f|
