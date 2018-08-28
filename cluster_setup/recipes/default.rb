@@ -217,10 +217,10 @@ template "/etc/profile.d/cluster-environment.sh" do
     mode '0755'
     variables(template_vars)
 end
-package 'make'
-package 'unzip'
+package ['make', 'unzip']
 template user_home + '/Makefile' do
     mode '0755'
+    owner username
     variables(template_vars)
 end
 

@@ -19,6 +19,8 @@ big-file:
 	[ -f /tmp/bigfile ] || tar -ckf /tmp/bigfile /lib
 	hdfs dfs -copyFromLocal /tmp/bigfile ${DEST}/big-file-1
 	hdfs dfs -cp ${DEST}/big-file-1 ${DEST}/big-file-2
+	hdfs dfs -cp ${DEST}/big-file-1 ${DEST}/big-file-3
+	hdfs dfs -cp ${DEST}/big-file-1 ${DEST}/big-file-4
 
 hdfs-files: wordcount euler
 	hdfs dfs -mkdir -p ${DEST}
