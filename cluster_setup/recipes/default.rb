@@ -46,7 +46,11 @@ end
 
 
 # hostnames
-delete_lines 'remove local name' do
+delete_lines 'remove local name 1' do
+  path '/etc/hosts'
+  pattern /^127\.0\.0\.1.*\.local.*/
+end
+delete_lines 'remove local name 2' do
   path '/etc/hosts'
   pattern /^127\.0\.1\.1.*\.local.*/
 end
