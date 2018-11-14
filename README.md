@@ -4,7 +4,7 @@ There are some configuration variables at the top of the `Vagrantfile` which you
 
 Once that's done, make sure you have Vagrant and VirtualBox installed and:
 ```
-vagrant plugin install vagrant-berkshelf
+git submodule update --init --recursive
 vagrant up
 ```
 
