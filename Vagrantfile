@@ -34,6 +34,7 @@ Vagrant.configure(2) do |config|
       chef.cookbooks_path = "."
       chef.add_recipe "cluster_setup"
       chef.json = SETUP_DATA
+      chef.version = "14.12.9"
     end
   end
     
@@ -46,6 +47,7 @@ Vagrant.configure(2) do |config|
         chef.cookbooks_path = "."
         chef.add_recipe "cluster_setup"
         chef.json = SETUP_DATA
+        chef.version = "14.12.9"
       end
     end
   end
