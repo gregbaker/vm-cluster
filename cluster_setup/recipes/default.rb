@@ -1,5 +1,5 @@
-HADOOP_VERSION = '3.1.1'
-SPARK_VERSION = '2.3.1'
+HADOOP_VERSION = '3.1.4'
+SPARK_VERSION = '3.0.1'
 SPARK_HADOOP_COMPAT = '2.7'
 
 UBUNTU_MIRROR = 'http://mirror.its.sfu.ca/mirror/ubuntu/'

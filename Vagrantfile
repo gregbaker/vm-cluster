@@ -21,7 +21,9 @@ Vagrant.configure(2) do |config|
 
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--cpus", CORES_PER_NODE, "--memory", MEMORY_PER_NODE]
-    vb.customize ["modifyvm", :id, "--uartmode1", "disconnected"] # speed up boot https://bugs.launchpad.net/cloud-images/+bug/1627844
+    # speed up boot: https://bugs.launchpad.net/cloud-images/+bug/1829625
+    vb.customize ["modifyvm", :id, "--uart1", "0x3F8", "4"]
+    vb.customize ["modifyvm", :id, "--uartmode1", "file", File::NULL]
     #vb.gui = true
   end
   
@@ -34,6 +36,7 @@ Vagrant.configure(2) do |config|
       chef.cookbooks_path = "."
       chef.add_recipe "cluster_setup"
       chef.json = SETUP_DATA
+      chef.version = "14.12.9"
     end
   end
     
@@ -46,6 +49,7 @@ Vagrant.configure(2) do |config|
         chef.cookbooks_path = "."
         chef.add_recipe "cluster_setup"
         chef.json = SETUP_DATA
+        chef.version = "14.12.9"
       end
     end
   end
